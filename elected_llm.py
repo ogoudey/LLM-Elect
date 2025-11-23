@@ -7,9 +7,9 @@ import asyncio
 import datetime
 import shutil
 
-class Elect(Agent):
 
-    
+
+class Elect(Agent):
     def __init__(self):
         try:
             assert_ci_structure()
@@ -115,7 +115,7 @@ def close_case(case_id: str, outcome: str, llm_name: str, llm_instructions: str,
     closed_dir = Path("cases/closed_cases") / case_id
     
     if closed_dir.exists():
-        input("Case with this ID already has already been closed.\n\tA. To overwrite press [enter].\nB. To exit do ^C."
+        input("Case with this ID already has already been closed.\n\tA. To overwrite press [enter].\n\tB. To exit do ^C.\n")
         shutil.rmtree(closed_dir)
             
     
@@ -177,8 +177,10 @@ if __name__ == "__main__":
     try:
         decide(sys.argv[1])
     except IndexError:
-        for case_id in list_open_cases():
-            print(case_id)
-        
+        open_cases_by_id = list_open_cases()
+        if len(open_cases_by_id) > 0:
+            print(f"Open cases:")
+            for case_id in open_cases_by_id:
+                print(case_id)
         decide(input("\nCase id: "))
 
