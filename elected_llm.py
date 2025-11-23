@@ -23,7 +23,7 @@ class Elect(Agent):
         
         
     def decide(self, prompt):
-        print(f"{self.name} deciding...", end="\r")
+        print(f"\n{self.name} deciding...", end="\r")
         response = asyncio.run(Runner.run(self, prompt))
         decision = response.final_output
         print(f"{self.name} has decided.")
@@ -97,11 +97,11 @@ def read_open_case(case_id: str) -> str:
 
 
 
-def close_case(case_id: str, outcome: str, llm_name: str, llm_instructions: str, prompt: str):
+def close_case(case_id: str, outcome: str, llm_name: str, llm_instructions: str, prompt: str, appeal_id: str | None = None):
     """
     Creates:
         cases/closed_cases/<case_id>/
-            <case_id>.txt      # copy of open case
+            <case_id>.txt      # copy of open case | 
             outcome.txt          # written from 'outcome'
             <llm_name>.txt       # dump of llm_instructions
             prompt.txt           # dump of the prompt
@@ -110,17 +110,24 @@ def close_case(case_id: str, outcome: str, llm_name: str, llm_instructions: str,
     if not base_open.is_file():
         raise FileNotFoundError(f"Open case not found: {base_open}")
 
-    
+    # Update case_ID for output
+    if appeal_id:
+        case_id = appeal_id
 
     closed_dir = Path("cases/closed_cases") / case_id
     
     if closed_dir.exists():
-        input("Case with this ID already has already been closed.\n\tA. To overwrite press [enter].\n\tB. To exit do ^C.\n")
-        shutil.rmtree(closed_dir)
+        new_name_or_blank = input("A case with this ID already has already been closed.\n\tA. To overwrite press [enter].\n\tB. To file as an appeal, input the new case ID.\n\tC. To exit do ^C.\n")
+        if new_name_or_blank == "":
+            shutil.rmtree(closed_dir)
+        else:
+            close_case(case_id, outcome, llm_name, llm_instructions, prompt, new_name_or_blank)
             
     
     closed_dir.mkdir(parents=True, exist_ok=True)
 
+   
+    
     # A. Copy open case → <case_id>.txt
     shutil.copy(base_open, closed_dir / f"{case_id}.txt")
 
