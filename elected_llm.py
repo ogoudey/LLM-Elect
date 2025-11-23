@@ -22,9 +22,11 @@ class Elect(Agent):
         super().__init__(f"Elect-{str(datetime.datetime.now())[:-7]}", instructions)
         
         
-    def decide(self, case_id):
-        response = asyncio.run(self, case_id)
+    def decide(self, prompt):
+        print(f"{self.name} deciding...", end="\r")
+        response = asyncio.run(Runner.run(self, prompt))
         decision = response.final_output
+        print(f"{self.name} has decided.")
         return decision
 
 def as_prompt(case: str) -> str:
@@ -35,19 +37,62 @@ def decide(case_id):
     prompt = as_prompt(case)
     
     e = Elect()
-    decision = e.decide(case_id)
+    decision = e.decide(prompt)
     
     close_case(case_id, decision, e.name, e.instructions, prompt)
 
 
+def list_open_cases():
+    """
+    Returns a list of case names (without .txt) from cases/open_cases/.
+    """
+    open_dir = Path("cases/open_cases")
+    
+    try:
+        if not open_dir.is_dir():
+            raise FileNotFoundError(f"Directory not found: {open_dir}")
+    except FileNotFoundError:
+        return []
+    
+    return [
+        p.stem
+        for p in open_dir.glob("*.txt")
+        if p.is_file()
+    ]
+def write_open_case(case_id: str, content: str, overwrite: bool = False) -> Path:
+    """
+    Writes content to: cases/open_cases/<case_id>.txt
+    Creates the directory if needed.
+    
+    If overwrite=False (default), raises an error if the case already exists.
+    """
+    path = Path("cases/open_cases") / f"{case_id}.txt"
+    path.parent.mkdir(parents=True, exist_ok=True)
+
+    if path.exists() and not overwrite:
+        raise FileExistsError(f"Open case already exists: {path}")
+
+    path.write_text(content)
+    return path
+    
 def read_open_case(case_id: str) -> str:
     """
     Reads: cases/open_cases/<case_id>.txt
     Returns its contents as a string.
     """
     path = Path("cases/open_cases") / f"{case_id}.txt"
-    if not path.is_file():
-        raise FileNotFoundError(f"Open case not found: {path}")
+    try:
+        if not path.is_file():
+            print(f"\nOpen case not found: {path}\n")
+            raise FileNotFoundError(f"Open case not found: {path}")
+    except FileNotFoundError:
+        try:
+            case = input("Write the case (^C to exit):\n\n>>> ")
+            write_open_case(case_id, case, True)
+            return read_open_case(case_id)
+        except KeyboardInterrupt:
+            raise FileNotFoundError(f"Won't make up new case...")
+        
     return path.read_text()
 
 
@@ -65,7 +110,15 @@ def close_case(case_id: str, outcome: str, llm_name: str, llm_instructions: str,
     if not base_open.is_file():
         raise FileNotFoundError(f"Open case not found: {base_open}")
 
+    
+
     closed_dir = Path("cases/closed_cases") / case_id
+    
+    if closed_dir.exists():
+        input("Case with this ID already has already been closed.\n\tA. To overwrite press [enter].\nB. To exit do ^C."
+        shutil.rmtree(closed_dir)
+            
+    
     closed_dir.mkdir(parents=True, exist_ok=True)
 
     # A. Copy open case → <case_id>.txt
@@ -121,6 +174,11 @@ def assert_ci_structure():
     return True
     
 if __name__ == "__main__":
-    e = Elect()
-    e.decide()
+    try:
+        decide(sys.argv[1])
+    except IndexError:
+        for case_id in list_open_cases():
+            print(case_id)
+        
+        decide(input("\nCase id: "))
 
