@@ -11,10 +11,10 @@ Instead of having one agent designed, closed off, and evaluated by some external
 What if instead of a few individuals writing their own constitutions and then making decisions off of it, an organization instantiated an automated decision maker that followed a document chosen by the people.
 
 ### Use cases in mind
-- Cooperative living arrangements
-- Judicial systems, regulation
+- Cooperative living arrangements, where the LLM is a sort of arbiter 
+- Purely democratic automated judicial and regulatory systems
 - A group of developers of agentic workflows
-- Democratically run workplaces
+- Democratically run workplaces which employ LLMs
 
 ### How to
 #### Set up
