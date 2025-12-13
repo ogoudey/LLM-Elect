@@ -19,8 +19,7 @@ class Elect(Agent):
             instructions = open(f"instructions.txt").read()
         except FileNotFoundError:
             raise FileNotFoundError(f"No instructions found!")
-        super().__init__(f"Elect-{str(datetime.datetime.now())[:-7]}", instructions)
-        
+        super().__init__(f"Elect-{str(datetime.datetime.now())[:-7]}", instructions=instructions)
         
     def decide(self, prompt):
         print(f"\n{self.name} deciding...", end="\r")
@@ -38,7 +37,6 @@ def decide(case_id):
     
     e = Elect()
     decision = e.decide(prompt)
-    
     close_case(case_id, decision, e.name, e.instructions, prompt)
 
 
@@ -133,7 +131,7 @@ def close_case(case_id: str, outcome: str, llm_name: str, llm_instructions: str,
 
     # B. outcome.txt
     (closed_dir / "outcome.txt").write_text(outcome)
-
+    
     # C. <llm_name>.txt (instructions dump)
     (closed_dir / f"{llm_name}.txt").write_text(llm_instructions)
 
@@ -183,7 +181,7 @@ def assert_ci_structure():
 if __name__ == "__main__":
     try:
         decide(sys.argv[1])
-    except IndexError:
+    except Exception:
         open_cases_by_id = list_open_cases()
         if len(open_cases_by_id) > 0:
             print(f"Open cases:")
